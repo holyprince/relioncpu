@@ -43,6 +43,41 @@
 
 
 
+void BackProjector::initialiseOnlyWeight(int current_size)
+{
+	// By default r_max is half ori_size
+	if (current_size < 0)
+		r_max = ori_size / 2;
+	else
+		r_max = current_size / 2;
+
+	// Never allow r_max beyond Nyquist...
+	r_max = XMIPP_MIN(r_max, ori_size / 2);
+
+	// Set pad_size
+	pad_size = 2 * (ROUND(padding_factor * r_max) + 1) + 1;
+
+	// Short side of data array
+	switch (ref_dim)
+	{
+	case 2:
+	   weight.resize(pad_size, pad_size / 2 + 1);
+	   break;
+	case 3:
+		weight.resize(pad_size, pad_size, pad_size / 2 + 1);
+	   break;
+	default:
+	   REPORT_ERROR("Projector::resizeData%%ERROR: Dimension of the data array should be 2 or 3");
+	}
+
+	// Set origin in the y.z-center, but on the left side for x.
+	weight.setXmippOrigin();
+	weight.xinit=0;
+
+}
+
+
+
 void BackProjector::initialiseDataAndWeight(int current_size)
 {
 
@@ -50,6 +85,13 @@ void BackProjector::initialiseDataAndWeight(int current_size)
 	weight.resize(data);
 
 }
+void BackProjector::initialiseOnlyData(int current_size)
+{
+
+	initialiseData(current_size);
+}
+
+
 
 void BackProjector::initZeros(int current_size)
 {
@@ -1537,6 +1579,7 @@ void BackProjector::reconstruct(MultidimArray<RFLOAT> &vol_out,
     data_vs_prior_out = data_vs_prior;
     fourier_coverage_out = fourier_coverage;
 }
+#ifdef CUDA
 void BackProjector::reconstruct_gpu(MultidimArray<RFLOAT> &vol_out,
                                 int max_iter_preweight,
                                 bool do_map,
@@ -2403,7 +2446,7 @@ void BackProjector::reconstruct_gpu(MultidimArray<RFLOAT> &vol_out,
     data_vs_prior_out = data_vs_prior;
     fourier_coverage_out = fourier_coverage;
 }
-
+#endif
 
 void BackProjector::symmetrise(int nr_helical_asu, RFLOAT helical_twist, RFLOAT helical_rise)
 {

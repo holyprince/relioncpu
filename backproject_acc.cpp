@@ -1,7 +1,7 @@
 #include "backproject_impl.h"
 
 
-
+#ifdef CUDA
 __device__ double tab_ftblobgetvalue(double *tabulatedValues, double val,double sampling,int xdim)
 {
 
@@ -289,31 +289,31 @@ void windowFourier(cufftComplex *d_Fconv,cufftComplex *d_Fconv_window,int rawdim
     			d_Fconv_window[index1].y=d_Fconv[index2].y;
     		}
 }
+#endif
 
-void printdatatofile(Complex *data,int N,int dimx,int flag,int iter)
+void printdatatofile(Complex *data,int N,int dimx,int rank,int iter,int flag)
 {
 	FILE *fp1;
 	FILE *fp2;
 	char filename[100];
 	memset(filename,0,100*sizeof(char));
-	sprintf(filename,"%003d_",iter);
-	sprintf(filename+4,"float_real.out");
+	if(flag==0)
+		sprintf(filename,"%d_%d_before_float_real.out",iter,rank);
+	else
+		sprintf(filename,"%d_%d_after_float_real.out",iter,rank);
+
 
 	char filename2[100];
 	memset(filename2,0,100*sizeof(char));
-	sprintf(filename2,"%003d_",iter);
-	sprintf(filename2+4,"float_imag.out");
+	if(flag==0)
+		sprintf(filename2,"%d_%d_before_float_imag.out",iter,rank);
+	else
+		sprintf(filename2,"%d_%d_after_float_imag.out",iter,rank);
+
 
 	fp1= fopen(filename,"w+");
 	fp2= fopen(filename2,"w+");
-/*	if(flag == 0)
-	{
-		fp= fopen("complex_gpu.out","w+");
-	}
-	else
-	{
-		fp= fopen("complex_cpu.out","w+");
-	}*/
+
 	for(int i=0;i< N ;i++)
 	{
 		//fprintf(fp,"%f %f ",data[i].real,data[i].imag);
@@ -327,6 +327,7 @@ void printdatatofile(Complex *data,int N,int dimx,int flag,int iter)
 	fclose(fp1);
 	fclose(fp2);
 }
+/*
 void printdatatofile(double *data,int N,int dimx,int flag)
 {
 	FILE *fp;
@@ -345,24 +346,19 @@ void printdatatofile(double *data,int N,int dimx,int flag)
 			fprintf(fp,"\n");
 	}
 	fclose(fp);
-}
-void printdatatofile(float *data,int N,int dimx,int flag,int iter)
+}*/
+void printdatatofile(float *data,int N,int dimx,int rank,int iter,int flag)
 {
 	FILE *fp;
 
 	char filename[100];
 	memset(filename,0,100*sizeof(char));
-	sprintf(filename,"%003d_",iter);
-	sprintf(filename+4,"float_cpu.out");
-	fp= fopen(filename,"w+");
-/*	if(flag == 0)
-	{
-		fp= fopen("float_gpu.out","w+");
-	}
+	if(flag==0)
+		sprintf(filename,"%d_%d_before_float_weight.out",iter,rank);
 	else
-	{
-		fp= fopen("float_cpu.out","w+");
-	}*/
+		sprintf(filename,"%d_%d_after_float_weight.out",iter,rank);
+	fp= fopen(filename,"w+");
+
 	for(int i=0;i< N ;i++)
 	{
 		fprintf(fp,"%f ",data[i]);
@@ -371,6 +367,7 @@ void printdatatofile(float *data,int N,int dimx,int flag,int iter)
 	}
 	fclose(fp);
 }
+/*
 void printdatatofile(cufftComplex *data,int N,int dimx,int flag)
 {
 	FILE *fp;
@@ -390,7 +387,6 @@ void printdatatofile(cufftComplex *data,int N,int dimx,int flag)
 			fprintf(fp,"\n");
 	}
 	fclose(fp);
-}
-
+}*/
 
 

@@ -1,10 +1,15 @@
-#include "cuda.h"
-#include "cuda_runtime.h"
-#include "cufft.h"
-#include "complex.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "multidim_array.h"
+#include "complex.h"
+
+#ifdef CUDA
+
+#include "cuda.h"
+#include "cuda_runtime.h"
+#include "cufft.h"
+
 
 static void HandleError( cudaError_t err,
                          const char *file,
@@ -40,10 +45,7 @@ float * gpusetdata_float(float *d_data,int N ,float *c_data);
 void vector_Multi(double *data1, float *data2, cufftComplex *res,int numElements);
 cufftComplex * gpumallocdata(cufftComplex *d_outData,int N);
 void cpugetdata(tComplex<float> *c_outData, cufftComplex *d_outData,int N);
-void printdatatofile(Complex *data,int N,int dimx,int flag,int iter);
-void printdatatofile(double *data,int N,int dimx,int flag);
-void printdatatofile(cufftComplex *data,int N,int dimx,int flag);
-void printdatatofile(float *data,int N,int dimx,int flag,int iter);
+
 void volume_Multi(float *data1, double *data2, int numElements, int xdim, double sampling , \
 		int padhdim, int pad_size, int ori_size, float padding_factor, double normftblob);
 
@@ -70,4 +72,14 @@ void mulit_alltoall_two(MultiGPUplan *plan, int dimx,int dimy,int dimz, int extr
 void mulit_alltoall_all1to0(MultiGPUplan *plan, int dimx,int dimy,int dimz, int extraz,int *offsetZ);
 void mulit_datacopy_0to1(MultiGPUplan *plan, int dimx,int dimy,int *offsetZ);
 void multi_sync(MultiGPUplan *plan,int GPU_N);
+
+
+#endif
+
+
+
+void printdatatofile(Complex *data,int N,int dimx,int rank,int iter,int flag);
+//void printdatatofile(double *data,int N,int dimx,int flag);
+//void printdatatofile(cufftComplex *data,int N,int dimx,int flag);
+void printdatatofile(float *data,int N,int dimx,int rank,int iter,int flag);
 

@@ -19,7 +19,8 @@
  ***************************************************************************/
 #include "ml_optimiser_mpi.h"
 #include "ml_optimiser.h"
-
+#include "backproject_impl.h"
+//#define TIMEICT
 #ifdef CUDA
 #include "acc/cuda/cuda_ml_optimiser.h"
 #endif
@@ -100,6 +101,12 @@ void MlOptimiserMpi::initialise()
 	// Print information about MPI nodes:
     if (!do_movies_in_batches)
     	printMpiNodesMachineNames(*node, nr_threads);
+#ifdef TIMEICT
+	struct timeval tv1,tv2;
+	struct timezone tz;
+	float time_use;
+	gettimeofday (&tv1, &tz);
+#endif
 #ifdef CUDA
     /************************************************************************/
 	//Setup GPU related resources
@@ -467,6 +474,7 @@ will still yield good performance and possibly a more stable execution. \n" << s
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank ==0 || node->rank==1)
 	printf("1. device arrange : %f and process id is %d \n", time_use,node->rank) ;
 #endif
 
@@ -478,7 +486,7 @@ will still yield good performance and possibly a more stable execution. \n" << s
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
-	printf("2. initialiseGeneral : %f and process id is %d \n", time_use,node->rank) ;
+	//printf("2. initialiseGeneral : %f and process id is %d \n", time_use,node->rank) ;
 #endif
 
 #ifdef TIMEICT
@@ -489,6 +497,7 @@ will still yield good performance and possibly a more stable execution. \n" << s
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank ==0 || node->rank==1)
 	printf("3. initialiseWorkLoad : %f and process id is %d \n", time_use,node->rank) ;
 #endif
 #ifdef ALTCPU
@@ -549,6 +558,7 @@ will still yield good performance and possibly a more stable execution. \n" << s
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank ==0 || node->rank==1)
 	printf("4. calculateSumOfPowerSpectraAndAverageImage : %f and process id is %d \n", time_use,node->rank) ;
 #endif
 		// Set sigma2_noise and Iref from averaged poser spectra and Mavg
@@ -561,6 +571,7 @@ will still yield good performance and possibly a more stable execution. \n" << s
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank ==0 || node->rank==1)
 	printf("5. setSigmaNoiseEstimatesAndSetAverageImage : %f and process id is %d \n", time_use,node->rank) ;
 #endif
 		}
@@ -573,6 +584,7 @@ will still yield good performance and possibly a more stable execution. \n" << s
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank ==0 || node->rank==1)
 	printf("6. initialLowPassFilterReferences : %f and process id is %d \n", time_use,node->rank) ;
 #endif
 
@@ -633,6 +645,7 @@ will still yield good performance and possibly a more stable execution. \n" << s
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank ==0 || node->rank==1)
 	printf("7. write op : %f and process id is %d \n", time_use,node->rank) ;
 #endif
 
@@ -817,6 +830,7 @@ void MlOptimiserMpi::expectation()
 	std::cerr << "MlOptimiserMpi::expectation: Entering " << std::endl;
 #endif
 
+
 	MultidimArray<long int> first_last_nr_images(6);
 	MultidimArray<RFLOAT> metadata;
 	int first_slave = 1;
@@ -915,7 +929,6 @@ void MlOptimiserMpi::expectation()
 		}
 	}
 #endif
-
 #ifdef TIMING
 		timer.toc(TIMING_EXP_1);
 		timer.tic(TIMING_EXP_2);
@@ -1021,7 +1034,7 @@ void MlOptimiserMpi::expectation()
 #ifdef TIMEICT
 		gettimeofday (&tv1, &tz);
 #endif
-	// E. All nodes, except the master, check memory and precalculate AB-matrices for on-the-fly shifts
+		// E. All nodes, except the master, check memory and precalculate AB-matrices for on-the-fly shifts
 	if (!node->isMaster())
 	{
 		// Check whether everything fits into memory
@@ -1041,7 +1054,6 @@ void MlOptimiserMpi::expectation()
 		timer.tic(TIMING_EXP_4);
 		timer.tic(TIMING_EXP_4a);
 #endif
-
 	// Wait until expected angular errors have been calculated
 	MPI_Barrier(MPI_COMM_WORLD);
 	sleep(1);
@@ -1056,7 +1068,6 @@ void MlOptimiserMpi::expectation()
 #define JOB_LEN_FN_CTF  (first_last_nr_images(4))
 #define JOB_LEN_FN_RECIMG  (first_last_nr_images(5))
 #define JOB_NPAR  (JOB_LAST - JOB_FIRST + 1)
-
 #ifdef CUDA
 
 
@@ -1421,7 +1432,6 @@ void MlOptimiserMpi::expectation()
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
 	printf("Expe6. job distributed from master : %f and process id is %d iter num: %d \n", time_use,node->rank,iter) ;
 #endif
-
     }
     else  // if not Master
     {
@@ -1554,7 +1564,6 @@ void MlOptimiserMpi::expectation()
                     struct timeval tv1,tv2;
                     struct timezone tz;
                     gettimeofday (&tv1, &tz);*/
-
 #ifdef TIMEICT
 		gettimeofday (&tparticle1, &tparticle);
 #endif
@@ -1743,7 +1752,6 @@ void MlOptimiserMpi::expectation()
 		timer.toc(TIMING_EXP_6);
 #endif
     }  // Slave node
-
 #ifdef  MKLFFT
 	// Allow parallel FFTW execution to continue now that we are outside the parallel
 	// portion of expectation
@@ -1921,6 +1929,10 @@ void MlOptimiserMpi::combineAllWeightedSums()
 		int piece = 0;
 		int nr_pieces = 1;
 		long int pack_size;
+
+
+
+
 		while (piece < nr_pieces)
 		{
 			// All nodes except those who will reset nr_pieces piece will pass while loop in next pass
@@ -2039,12 +2051,187 @@ void MlOptimiserMpi::combineAllWeightedSums()
 		MPI_Barrier(MPI_COMM_WORLD);
 	}
 
+
 #ifdef TIMING
     timer.toc(TIMING_MPICOMBINENETW);
 #endif
 
 }
+void MlOptimiserMpi::combineAllWeightedSumslowpresion()
+{
 
+#ifdef TIMING
+    timer.tic(TIMING_MPICOMBINENETW);
+#endif
+
+    // Pack all weighted sums in Mpack
+	MultidimArray<RFLOAT> Mpack, Msum;
+	MultidimArray<int> Mpackdata, Msumdata;
+	MPI_Status status;
+
+	// First slave manually sums over all other slaves of it's subset
+	// And then sends results back to all those slaves
+	// When splitting the data into two random halves, perform two passes: one for each subset
+	int nr_halfsets = (do_split_random_halves) ? 2 : 1;
+
+#ifdef DEBUG
+	std::cerr << " starting combineAllWeightedSums..." << std::endl;
+#endif
+	// Only combine weighted sums if there are more than one slaves per subset!
+	if ((node->size - 1)/nr_halfsets > 1)
+	{
+
+		// Loop over possibly multiple instances of Mpack of maximum size
+		int piece = 0;
+		int piecedata =0;
+		int nr_pieces = 1;
+		int nr_piecesdata = 1;
+		long int pack_size;
+		long int pack_size_data;
+
+		while (piece < nr_pieces)
+		{
+			// All nodes except those who will reset nr_pieces piece will pass while loop in next pass
+			nr_pieces = 0;
+
+			// First all slaves pack up their wsum_model
+			if (!node->isMaster())
+			{
+				wsum_model.packpart1(Mpack, piece, nr_pieces);
+				wsum_model.packpart2(Mpackdata, piecedata, nr_piecesdata);
+
+				//printf("Mpack.nzyxdim,piece,nr_pieces : %ld %d %d ",Mpack.nzyxdim,piece,nr_pieces);
+
+				// The first slave(s) set Msum equal to Mpack, the others initialise to zero
+				if (node->rank <= nr_halfsets)
+				{
+					Msum = Mpack;
+					Msumdata = Mpackdata;
+				}
+				else
+				{
+					Msum.initZeros(Mpack);
+					Msumdata.initZeros(Mpackdata);
+
+				}
+			}
+
+
+			// Loop through all slaves: each slave sends its Msum to the next slave for its subset.
+			// Each next slave sums its own Mpack to the received Msum and sends it on to the next slave
+			for (int this_slave = 1; this_slave < node->size; this_slave++ )
+			{
+				// Find out who is the first slave in this subset
+				int first_slave;
+				if (!do_split_random_halves)
+					first_slave = 1;
+				else
+					first_slave = (this_slave % 2 == 1) ? 1 : 2;
+
+				// Find out who is the next slave in this subset
+				int other_slave = this_slave + nr_halfsets;
+
+				if (other_slave < node->size)
+				{
+					if (node->rank == this_slave)
+					{
+						if(this_slave ==1)
+							printf("Start send and focus on next info\n");
+#ifdef DEBUG
+						std::cerr << " AA SEND node->rank= " << node->rank << " MULTIDIM_SIZE(Msum)= "<< MULTIDIM_SIZE(Msum)
+								<< " this_slave= " << this_slave << " other_slave= "<<other_slave << std::endl;
+#endif
+						node->relion_MPI_Send(MULTIDIM_ARRAY(Msum), MULTIDIM_SIZE(Msum), MY_MPI_DOUBLE, other_slave, MPITAG_PACK, MPI_COMM_WORLD);
+						node->relion_MPI_Send(MULTIDIM_ARRAY(Msumdata), MULTIDIM_SIZE(Msumdata), MY_MPI_INT, other_slave, MPITAG_PACK, MPI_COMM_WORLD);
+					}
+					else if (node->rank == other_slave)
+					{
+						node->relion_MPI_Recv(MULTIDIM_ARRAY(Msum), MULTIDIM_SIZE(Msum), MY_MPI_DOUBLE, this_slave, MPITAG_PACK, MPI_COMM_WORLD, status);
+						node->relion_MPI_Recv(MULTIDIM_ARRAY(Msumdata), MULTIDIM_SIZE(Msumdata), MY_MPI_INT, this_slave, MPITAG_PACK, MPI_COMM_WORLD, status);
+#ifdef DEBUG
+						std::cerr << " AA RECV node->rank= " << node->rank  << " MULTIDIM_SIZE(Msum)= "<< MULTIDIM_SIZE(Msum)
+								<< " this_slave= " << this_slave << " other_slave= "<<other_slave << std::endl;
+#endif
+						// Add my own Mpack to send onwards in the next step
+						Msum += Mpack;
+						Msumdata += Mpackdata;
+					}
+				}
+				else
+				{
+					// Now this_slave has reached the last slave, which passes the final Msum to the first one (i.e. first_slave)
+					if (node->rank == this_slave)
+					{
+#ifdef DEBUG
+						std::cerr << " BB SEND node->rank= " << node->rank  << " MULTIDIM_SIZE(Msum)= "<< MULTIDIM_SIZE(Msum)
+								<< " this_slave= " << this_slave << " first_slave= "<<first_slave << std::endl;
+#endif
+						node->relion_MPI_Send(MULTIDIM_ARRAY(Msum), MULTIDIM_SIZE(Msum), MY_MPI_DOUBLE, first_slave, MPITAG_PACK, MPI_COMM_WORLD);
+						node->relion_MPI_Send(MULTIDIM_ARRAY(Msumdata), MULTIDIM_SIZE(Msumdata), MY_MPI_INT, first_slave, MPITAG_PACK, MPI_COMM_WORLD);
+					}
+					else if (node->rank == first_slave)
+					{
+						node->relion_MPI_Recv(MULTIDIM_ARRAY(Msum), MULTIDIM_SIZE(Msum), MY_MPI_DOUBLE, this_slave, MPITAG_PACK, MPI_COMM_WORLD, status);
+						node->relion_MPI_Recv(MULTIDIM_ARRAY(Msumdata), MULTIDIM_SIZE(Msumdata), MY_MPI_INT, this_slave, MPITAG_PACK, MPI_COMM_WORLD, status);
+#ifdef DEBUG
+						std::cerr << " BB RECV node->rank= " << node->rank  << " MULTIDIM_SIZE(Msum)= "<< MULTIDIM_SIZE(Msum)
+								<< " this_slave= " << this_slave << " first_slave= "<<first_slave << std::endl;
+#endif
+					}
+				}
+			} // end for this_slave
+
+			// Now loop through all slaves again to pass around the Msum
+			for (int this_slave = 1; this_slave < node->size; this_slave++ )
+			{
+				// Find out who is the next slave in this subset
+				int other_slave = this_slave + nr_halfsets;
+
+				// Do not send to the last slave, because it already had its Msum from the cycle above, therefore subtract nr_halfsets from node->size
+				if (other_slave < node->size - nr_halfsets)
+				{
+					if (node->rank == this_slave)
+					{
+#ifdef DEBUG
+						std::cerr << " CC SEND node->rank= " << node->rank << " MULTIDIM_SIZE(Msum)= "<< MULTIDIM_SIZE(Msum)
+								<< " this_slave= " << this_slave << " other_slave= "<<other_slave << std::endl;
+#endif
+						node->relion_MPI_Send(MULTIDIM_ARRAY(Msum), MULTIDIM_SIZE(Msum), MY_MPI_DOUBLE, other_slave, MPITAG_PACK, MPI_COMM_WORLD);
+						node->relion_MPI_Send(MULTIDIM_ARRAY(Msumdata), MULTIDIM_SIZE(Msumdata), MY_MPI_INT, other_slave, MPITAG_PACK, MPI_COMM_WORLD);
+					}
+					else if (node->rank == other_slave)
+					{
+						node->relion_MPI_Recv(MULTIDIM_ARRAY(Msum), MULTIDIM_SIZE(Msum), MY_MPI_DOUBLE, this_slave, MPITAG_PACK, MPI_COMM_WORLD, status);
+						node->relion_MPI_Recv(MULTIDIM_ARRAY(Msumdata), MULTIDIM_SIZE(Msumdata), MY_MPI_INT, this_slave, MPITAG_PACK, MPI_COMM_WORLD, status);
+#ifdef DEBUG
+						std::cerr << " CC RECV node->rank= " << node->rank << " MULTIDIM_SIZE(Msum)= "<< MULTIDIM_SIZE(Msum)
+								<< " this_slave= " << this_slave << " other_slave= "<<other_slave << std::endl;
+#endif
+					}
+				}
+			} // end for this_slave
+
+
+			// Finally all slaves unpack Msum into their wsum_model
+			if (!node->isMaster())
+			{
+				// Subtract 1 from piece because it was incremented already...
+				wsum_model.unpackpart1(Msum, piece - 1);
+				wsum_model.unpackpart2(Msumdata, piece - 1);
+			}
+
+
+		} // end for piece
+
+		MPI_Barrier(MPI_COMM_WORLD);
+	}
+
+
+#ifdef TIMING
+    timer.toc(TIMING_MPICOMBINENETW);
+#endif
+
+}
 void MlOptimiserMpi::combineWeightedSumsTwoRandomHalvesViaFile()
 {
 	// Just sum the weighted halves from slave 1 and slave 2 and Bcast to everyone else
@@ -3097,9 +3284,9 @@ void MlOptimiserMpi::readTemporaryDataAndWeightArraysAndReconstruct(int iclass, 
 	// And write the resulting model to disc
 	Iunreg.write(fn_root+"_unfil.mrc");
 
-	printf(" %d %d %f %d\n", wsum_model.BPref[iclass].ori_size, wsum_model.BPref[iclass].data_dim,wsum_model.BPref[iclass].padding_factor,wsum_model.BPref[iclass].pad_size);
-	printf("%d \n ",wsum_model.BPref[iclass].r_min_nn);
-	printf("%ld %ld %ld \n",wsum_model.BPref[iclass].weight.xdim,wsum_model.BPref[iclass].weight.ydim,wsum_model.BPref[iclass].weight.zdim);
+//	printf(" %d %d %f %d\n", wsum_model.BPref[iclass].ori_size, wsum_model.BPref[iclass].data_dim,wsum_model.BPref[iclass].padding_factor,wsum_model.BPref[iclass].pad_size);
+//	printf("%d \n ",wsum_model.BPref[iclass].r_min_nn);
+//	printf("%ld %ld %ld \n",wsum_model.BPref[iclass].weight.xdim,wsum_model.BPref[iclass].weight.ydim,wsum_model.BPref[iclass].weight.zdim);
 
 	/*
 	// remove temporary arrays from the disc
@@ -3271,13 +3458,44 @@ void MlOptimiserMpi::iterate()
 	gettimeofday (&tv1, &tz);
 #endif
 
+	struct timeval tv1,tv2;
+	struct timezone tz;
+	float time_use;
+		gettimeofday (&tv1, &tz);
+		if (combine_weights_thru_disc)
+			combineAllWeightedSumsViaFile();
+		else
+		{
+			if(iter>25)
+				combineAllWeightedSums();
+			else
+				combineAllWeightedSumslowpresion();
+		}
+		gettimeofday (&tv2, &tz);
+		time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+		if(node->rank==1)
+		printf(" EM : combineAllWeightedSums : %f and process id is %d iter num: %d \n", time_use,node->rank,iter) ;
+
+
+/*
+    if((iter==1 || iter==10  || iter==25 )&& node->rank<=4)
+    {
+    	printf("wsum_model size : %d %d %d ",wsum_model.BPref[0].weight.xdim,wsum_model.BPref[0].weight.ydim,wsum_model.BPref[0].weight.zdim);
+    	printdatatofile(wsum_model.BPref[0].weight.data,wsum_model.BPref[0].weight.nzyxdim,wsum_model.BPref[0].weight.xdim,node->rank,iter,0);
+    	printdatatofile(wsum_model.BPref[0].data.data,wsum_model.BPref[0].data.nzyxdim,wsum_model.BPref[0].data.xdim,node->rank,iter,0);
+    }
+
 
 		if (combine_weights_thru_disc)
 			combineAllWeightedSumsViaFile();
 		else
 			combineAllWeightedSums();
-
-
+	    if((iter==1 || iter==10  || iter==25) && node->rank==1 )
+	        {
+	        	printdatatofile(wsum_model.BPref[0].weight.data,wsum_model.BPref[0].weight.nzyxdim,wsum_model.BPref[0].weight.xdim,node->rank,iter,1);
+	        	printdatatofile(wsum_model.BPref[0].data.data,wsum_model.BPref[0].data.nzyxdim,wsum_model.BPref[0].data.xdim,node->rank,iter,1);
+	        }
+*/
 #ifdef DEBUG
 		std::cerr << " after combineAllWeightedSums..." << std::endl;
 #endif
@@ -3286,6 +3504,7 @@ void MlOptimiserMpi::iterate()
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank==0 || node->rank==1)
 	printf(" EM : combineAllWeightedSums : %f and process id is %d iter num: %d \n", time_use,node->rank,iter) ;
 	gettimeofday (&tv1, &tz);
 #endif
@@ -3323,7 +3542,7 @@ void MlOptimiserMpi::iterate()
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
-	printf(" EM : sym reconstrcutcion : %f and process id is %d iter num: %d \n", time_use,node->rank,iter) ;
+	//printf(" EM : sym reconstrcutcion : %f and process id is %d iter num: %d \n", time_use,node->rank,iter) ;
 #endif
 		// Inside iterative refinement: do FSC-calculation BEFORE the solvent flattening, otherwise over-estimation of resolution
 		// anyway, now that this is done inside BPref, there would be no other way...
@@ -3338,6 +3557,7 @@ void MlOptimiserMpi::iterate()
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank==0 || node->rank==1)
 	printf(" EM : joinTwoHalvesAtLowResolution : %f and process id is %d iter num: %d\n", time_use,node->rank,iter) ;
 	gettimeofday (&tv1, &tz);
 #endif
@@ -3356,6 +3576,7 @@ void MlOptimiserMpi::iterate()
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank==0 || node->rank==1)
 	printf(" EM : compareTwoHalves : %f and process id is %d iter num: %d \n", time_use,node->rank,iter) ;
 	gettimeofday (&tv1, &tz);
 #endif
@@ -3389,7 +3610,7 @@ void MlOptimiserMpi::iterate()
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
-	printf(" EM : automated sampling : %f and process id is %d iter num: %d \n", time_use,node->rank,iter) ;
+	//printf(" EM : automated sampling : %f and process id is %d iter num: %d \n", time_use,node->rank,iter) ;
 
 #endif
 			// Upon convergence join the two random halves
@@ -3405,6 +3626,7 @@ void MlOptimiserMpi::iterate()
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank==0 || node->rank==1)
 	printf(" EM : combineWeightedSumsTwoRandomHalves : %f and process id is %d iter num: %d \n", time_use,node->rank,iter) ;
 
 #endif
@@ -3450,6 +3672,7 @@ void MlOptimiserMpi::iterate()
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank==0 || node->rank==1)
 	printf(" After Max : relion_MPI_Bcast : %f and process id is %d iter num: %d\n", time_use,node->rank,iter) ;
 	gettimeofday (&tv1, &tz);
 #endif
@@ -3503,6 +3726,7 @@ void MlOptimiserMpi::iterate()
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank==0 || node->rank==1)
 	printf(" After Max : write model : %f and process id is %d iter num: %d \n", time_use,node->rank,iter) ;
 	gettimeofday (&tv1, &tz);
 #endif
@@ -3518,7 +3742,7 @@ void MlOptimiserMpi::iterate()
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
-	printf(" After Max : solventFlatten : %f and process id is %d iter num: %d\n", time_use,node->rank,iter) ;
+	//printf(" After Max : solventFlatten : %f and process id is %d iter num: %d\n", time_use,node->rank,iter) ;
 	gettimeofday (&tv1, &tz);
 #endif
 #ifdef TIMING
@@ -3547,6 +3771,7 @@ void MlOptimiserMpi::iterate()
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank==0 || node->rank==1)
 	printf(" After Max : write2  : %f and process id is %d iter num: %d\n", time_use,node->rank,iter) ;
 	gettimeofday (&tv1, &tz);
 #endif
@@ -3599,6 +3824,7 @@ void MlOptimiserMpi::iterate()
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(node->rank==0 || node->rank==1)
 	printf(" After Max : print info  : %f and process id is %d iter num: %d \n", time_use,node->rank,iter) ;
 	gettimeofday (&tv1, &tz);
 #endif
