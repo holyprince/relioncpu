@@ -1913,11 +1913,12 @@ void MlOptimiserMpi::combineAllWeightedSums()
     // Pack all weighted sums in Mpack
 	MultidimArray<RFLOAT> Mpack, Msum;
 	MPI_Status status;
+	int nr_halfsets = (do_split_random_halves) ? 2 : 1;
 
 	// First slave manually sums over all other slaves of it's subset
 	// And then sends results back to all those slaves
 	// When splitting the data into two random halves, perform two passes: one for each subset
-	int nr_halfsets = (do_split_random_halves) ? 2 : 1;
+
 
 #ifdef DEBUG
 	std::cerr << " starting combineAllWeightedSums..." << std::endl;
@@ -1929,8 +1930,6 @@ void MlOptimiserMpi::combineAllWeightedSums()
 		int piece = 0;
 		int nr_pieces = 1;
 		long int pack_size;
-
-
 
 
 		while (piece < nr_pieces)

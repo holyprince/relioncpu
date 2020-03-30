@@ -1403,7 +1403,7 @@ void MlWsumModel::initialise(MlModel &_model, FileName fn_sym, bool asymmetric_p
 void MlWsumModel::initZeros()
 {
 
-    LL = 0.;
+    LL = 100;
     ave_Pmax = 0.;
     sigma2_offset = 0.;
     avg_norm_correction = 0.;
@@ -1412,7 +1412,7 @@ void MlWsumModel::initZeros()
     sigma2_psi = 0.;
 
     // Set all weighted sums to zero
-
+    printf("OK0\n");
     for (int iclass = 0; iclass < nr_classes * nr_bodies; iclass++)
     {
     	BPref[iclass].initZeros(current_size);
@@ -1420,13 +1420,14 @@ void MlWsumModel::initZeros()
         pdf_direction[iclass].initZeros();
     }
 
+    printf("OK1\n");
     for (int iclass = 0; iclass < nr_classes; iclass++)
     {
         pdf_class[iclass] = 0.;
         if (ref_dim == 2)
         	prior_offset_class[iclass].initZeros();
     }
-
+    printf("OK2\n");
     // Initialise sigma2_noise spectra and sumw_group
     for (int igroup = 0; igroup < nr_groups; igroup++)
     {
@@ -1435,6 +1436,7 @@ void MlWsumModel::initZeros()
         wsum_signal_product_spectra[igroup].initZeros();
         wsum_reference_power_spectra[igroup].initZeros();
     }
+    printf("OK3\n");
 }
 
 //#define DEBUG_PACK
@@ -1681,6 +1683,7 @@ void MlWsumModel::pack(MultidimArray<RFLOAT> &packed, int &piece, int &nr_pieces
         nr_pieces = 1;
     }
 
+    printf("ttttt1\n");
     // increment piece so that pack will be called again
     piece++;
 #ifdef DEBUG_PACK
@@ -1711,7 +1714,7 @@ void MlWsumModel::pack(MultidimArray<RFLOAT> &packed, int &piece, int &nr_pieces
     ori_idx++;
     if (ori_idx >= idx_start && ori_idx < idx_stop) DIRECT_MULTIDIM_ELEM(packed, idx++) = sigma2_psi;
     ori_idx++;
-
+    printf("ttttt2\n");
     for (int igroup = 0; igroup < nr_groups; igroup++)
     {
     	FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(sigma2_noise[igroup])
@@ -1742,6 +1745,7 @@ void MlWsumModel::pack(MultidimArray<RFLOAT> &packed, int &piece, int &nr_pieces
         ori_idx++;
 
     }
+    printf("ttttt3\n");
     for (int iclass = 0; iclass < nr_classes_bodies; iclass++)
     {
     	FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(BPref[iclass].data)
@@ -1771,7 +1775,7 @@ void MlWsumModel::pack(MultidimArray<RFLOAT> &packed, int &piece, int &nr_pieces
         if (idx == ori_idx && do_clear)
         	pdf_direction[iclass].clear();
     }
-
+    printf("ttttt4\n");
     for (int iclass = 0; iclass < nr_classes; iclass++)
     {
 
