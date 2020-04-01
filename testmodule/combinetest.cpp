@@ -61,6 +61,7 @@ void initwsmmodel(MlWsumModel &summodel, int cur_size,int ori_size,int nr_groups
 	MultidimArray<RFLOAT > aux;
     aux.initZeros(ori_size / 2 + 1);
 	int ref_dim=3;
+	summodel.ori_size=ori_size;
 	summodel.ref_dim=ref_dim;
 	summodel.current_size=cur_size;
 	summodel.nr_classes=1;
@@ -78,9 +79,10 @@ void initwsmmodel(MlWsumModel &summodel, int cur_size,int ori_size,int nr_groups
 	summodel.sumw_group.resize(nr_groups);
 	summodel.wsum_signal_product_spectra.resize(nr_groups, aux);
 	summodel.wsum_reference_power_spectra.resize(nr_groups, aux);
-	printf("before : %f \n",summodel.LL);
+	//printf("before : %f \n",summodel.LL);
 	summodel.initZeros();
-	printf("after : %f \n",summodel.LL);
+	//printf("after : %f \n",summodel.LL);
+	//printf("BPrefsize : %d \n",summodel.BPref[0].getSize());
 
 }
 
@@ -91,23 +93,31 @@ int main(int argc, char **argv)
 
 	optimiser.node = new MpiNode(argc, argv);
 
-	printf("MPI %d and %d ",optimiser.node->rank,optimiser.node->size);
+	//printf("MPI %d and %d ",optimiser.node->rank,optimiser.node->size);
 
 	optimiser.do_split_random_halves=1;
 	printMpiNodesMachineNames(*(optimiser.node), 1);
 	//optimiser.initialise();
+	int ori_size=360;
+	int cur_size=236;
 
+	initwsmmodel(optimiser.wsum_model,cur_size,ori_size,1000);
+	setvalue(optimiser.wsum_model,ori_size,optimiser.node->rank);
+	//printf("before combine : %f rank is %d  \n",optimiser.wsum_model.BPref[0].data.data[0].real,optimiser.node->rank);
 
-
-	initwsmmodel(optimiser.wsum_model,75,360,1000);
-	setvalue(optimiser.wsum_model,360,optimiser.node->rank);
-	printf("before combine : %f rank is %d  \n",optimiser.wsum_model.BPref[0].data.data[0].real,optimiser.node->rank);
-	optimiser.combineAllWeightedSums();
-
-
-
-	printf("after combine : %f rank is %d \n",optimiser.wsum_model.BPref[0].data.data[0].real,optimiser.node->rank);
-
+	struct timeval tv1,tv2;
+	struct timezone tz;
+	float time_use;
+	gettimeofday (&tv1, &tz);
+	//optimiser.combineAllWeightedSums();
+	optimiser.combineAllWeightedSumsallreduce();
+	gettimeofday (&tv2, &tz);
+	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(optimiser.node->rank ==0 || optimiser.node->rank==1)
+	{
+		printf("combinedata : %f ms and process id is %d \n", time_use,optimiser.node->rank) ;
+		printf("after combine : %f rank is %d \n",optimiser.wsum_model.BPref[0].data.data[0].real,optimiser.node->rank);
+	}
 
 
 /*	int numprocess=100;

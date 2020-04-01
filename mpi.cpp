@@ -65,6 +65,14 @@ MpiNode::MpiNode(int &argc, char ** argv)
     else
     	slaveRank = -1;
     // -------------------------------------------------------------------
+    // Set up Slave group communicator ---------------by wzh--------------
+    color=3;
+    if(rank!=0)
+    {
+    	rank %2 !=0 ? color=1 : color=2;
+    }
+    MPI_Comm_split(MPI_COMM_WORLD, color, rank, &group_comm);
+
 }
 
 MpiNode::~MpiNode()

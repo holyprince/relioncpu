@@ -94,6 +94,7 @@ public:
      */
     void combineAllWeightedSums();
     void combineAllWeightedSumslowpresion();
+    void combineAllWeightedSumsallreduce();
     /** Join the sums from two random halves
      */
     void combineWeightedSumsTwoRandomHalves();

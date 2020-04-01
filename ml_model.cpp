@@ -1412,7 +1412,6 @@ void MlWsumModel::initZeros()
     sigma2_psi = 0.;
 
     // Set all weighted sums to zero
-    printf("OK0\n");
     for (int iclass = 0; iclass < nr_classes * nr_bodies; iclass++)
     {
     	BPref[iclass].initZeros(current_size);
@@ -1420,14 +1419,12 @@ void MlWsumModel::initZeros()
         pdf_direction[iclass].initZeros();
     }
 
-    printf("OK1\n");
     for (int iclass = 0; iclass < nr_classes; iclass++)
     {
         pdf_class[iclass] = 0.;
         if (ref_dim == 2)
         	prior_offset_class[iclass].initZeros();
     }
-    printf("OK2\n");
     // Initialise sigma2_noise spectra and sumw_group
     for (int igroup = 0; igroup < nr_groups; igroup++)
     {
@@ -1436,7 +1433,6 @@ void MlWsumModel::initZeros()
         wsum_signal_product_spectra[igroup].initZeros();
         wsum_reference_power_spectra[igroup].initZeros();
     }
-    printf("OK3\n");
 }
 
 //#define DEBUG_PACK
@@ -1646,23 +1642,31 @@ void MlWsumModel::pack(MultidimArray<RFLOAT> &packed, int &piece, int &nr_pieces
 
 	// for LL & avePmax & sigma2_offset & avg_norm_correction & sigma2_rot & sigma2_tilt & sigma2_psi
     packed_size += 7 ;
+    //printf("packed_size1: %d \n",packed_size);
+    //printf("packed_size1.5: %d %d\n",nr_groups,spectral_size);
     // for all group-related stuff
     packed_size += nr_groups * spectral_size;
     packed_size += nr_groups * spectral_size;
     packed_size += nr_groups * spectral_size;
+    //printf("packed_size2: %d \n",packed_size);
     // for sumw_group
     packed_size += nr_groups;
+    //printf("packed_size3: %d \n",packed_size);
     // for all class-related stuff
     // data is complex: multiply by two!
     packed_size += nr_classes_bodies * 2 * BPref[0].getSize();
     packed_size += nr_classes_bodies * BPref[0].getSize();
+    //printf("packed_size4: %d \n",packed_size);
     packed_size += nr_classes_bodies * nr_directions;
+    //printf("packed_size5: %d \n",packed_size);
     // for pdf_class
     packed_size += nr_classes;
+    //printf("packed_size6: %d \n",packed_size);
     // for priors for each class
     if (ref_dim==2)
     	packed_size += nr_classes*2;
-
+    //printf("packed_sizefinal: %d \n",packed_size);
+    printf("packed_size : %lld \n",packed_size);
 
     if (piece < 0 && nr_pieces < 0)
     {
@@ -1683,7 +1687,6 @@ void MlWsumModel::pack(MultidimArray<RFLOAT> &packed, int &piece, int &nr_pieces
         nr_pieces = 1;
     }
 
-    printf("ttttt1\n");
     // increment piece so that pack will be called again
     piece++;
 #ifdef DEBUG_PACK
@@ -1714,7 +1717,6 @@ void MlWsumModel::pack(MultidimArray<RFLOAT> &packed, int &piece, int &nr_pieces
     ori_idx++;
     if (ori_idx >= idx_start && ori_idx < idx_stop) DIRECT_MULTIDIM_ELEM(packed, idx++) = sigma2_psi;
     ori_idx++;
-    printf("ttttt2\n");
     for (int igroup = 0; igroup < nr_groups; igroup++)
     {
     	FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(sigma2_noise[igroup])
@@ -1745,7 +1747,6 @@ void MlWsumModel::pack(MultidimArray<RFLOAT> &packed, int &piece, int &nr_pieces
         ori_idx++;
 
     }
-    printf("ttttt3\n");
     for (int iclass = 0; iclass < nr_classes_bodies; iclass++)
     {
     	FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(BPref[iclass].data)
@@ -1775,7 +1776,6 @@ void MlWsumModel::pack(MultidimArray<RFLOAT> &packed, int &piece, int &nr_pieces
         if (idx == ori_idx && do_clear)
         	pdf_direction[iclass].clear();
     }
-    printf("ttttt4\n");
     for (int iclass = 0; iclass < nr_classes; iclass++)
     {
 

@@ -71,8 +71,9 @@ class MpiNode
 
 public:
     int rank, size;
-
+    int color;
     MPI_Group worldG, slaveG; // groups of ranks (in practice only used to create communicators)
+    MPI_Comm group_comm;
 	MPI_Comm worldC, slaveC;  // communicators
 	int slaveRank;			  // index of slave within the slave-group (and communicator)
 
