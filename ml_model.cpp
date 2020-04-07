@@ -1441,7 +1441,9 @@ void MlWsumModel::initZeros()
 //#define MAX_PACK_SIZE 671010000
 #else
 // Approximately 1024*1024*1024/8/2 ~ 0.5 Gb
-#define MAX_PACK_SIZE 671010000
+//#define MAX_PACK_SIZE 671010000
+#define MAX_PACK_SIZE 335505000
+
 #endif
 
 void MlWsumModel::pack(MultidimArray<RFLOAT> &packed)
@@ -1666,7 +1668,7 @@ void MlWsumModel::pack(MultidimArray<RFLOAT> &packed, int &piece, int &nr_pieces
     if (ref_dim==2)
     	packed_size += nr_classes*2;
     //printf("packed_sizefinal: %d \n",packed_size);
-    printf("packed_size : %lld \n",packed_size);
+    //printf("packed_size : %lld \n",packed_size);
 
     if (piece < 0 && nr_pieces < 0)
     {

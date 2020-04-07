@@ -2103,7 +2103,7 @@ void MlOptimiserMpi::combineAllWeightedSumsallreduce()
 				else
 					Msum.initZeros(Mpack);
 			}
-
+			printf("pack finished %d \n",node->rank);
 			MPI_Allreduce(MULTIDIM_ARRAY(Mpack), MULTIDIM_ARRAY(Msum),MULTIDIM_SIZE(Msum), MY_MPI_DOUBLE, MPI_SUM, node->group_comm);
 /*
 			// Loop through all slaves: each slave sends its Msum to the next slave for its subset.
@@ -3620,10 +3620,10 @@ void MlOptimiserMpi::iterate()
 			combineAllWeightedSumsViaFile();
 		else
 		{
-			if(iter>25)
+			//if(iter>25)
 				combineAllWeightedSums();
-			else
-				combineAllWeightedSumslowpresion();
+			//else
+			//	combineAllWeightedSumslowpresion();
 		}
 		gettimeofday (&tv2, &tz);
 		time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
@@ -3655,6 +3655,24 @@ void MlOptimiserMpi::iterate()
 #endif
 
 		MPI_Barrier(MPI_COMM_WORLD);
+
+		//int offset = (wsum_model.BPref[0].data.ydim/2)*wsum_model.BPref[0].data.ydim*wsum_model.BPref[0].data.xdim;
+/*		int offset =0;
+		if(node->rank==1)
+		{
+			FILE *fp;
+			fp=fopen("com1data","a");
+
+			printf("\n");
+			for(int i=0;i<wsum_model.BPref[0].data.xdim*wsum_model.BPref[0].data.ydim;i++)
+			{
+				fprintf(fp,"%.1f ",wsum_model.BPref[0].data.data[i+offset].real);
+				if((i+1)%wsum_model.BPref[0].data.xdim==0)
+					fprintf(fp,"\n");
+			}
+			fclose(fp);
+		}
+*/
 #ifdef TIMEICT
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;

@@ -7066,6 +7066,7 @@ void MlOptimiser::storeWeightedSums(long int my_ori_particle, int ibody, int exp
 			exp_itrans_min, exp_itrans_max, exp_Fimgs, exp_Fimgs_nomask, exp_Fctfs, exp_local_Fimgs_shifted, exp_local_Fimgs_shifted_nomask,
 			exp_local_Fctfs, exp_local_sqrtXi2, exp_local_Minvsigma2s);
 
+
 	// In doThreadPrecalculateShiftedImagesCtfsAndInvSigma2s() the origin of the exp_local_Minvsigma2s was omitted.
 	// Set those back here
 	for (long int ipart = 0; ipart < mydata.ori_particles[my_ori_particle].particles_id.size(); ipart++)
@@ -7819,7 +7820,8 @@ void MlOptimiser::storeWeightedSums(long int my_ori_particle, int ibody, int exp
 							if (mymodel.nr_bodies > 1)
 								(wsum_model.BPref[ibody]).set2DFourierTransform(Fimg, Abody, IS_NOT_INV, &Fweight);
 							else
-								(wsum_model.BPref[exp_iclass]).set2DFourierTransform(Fimg, A, IS_NOT_INV, &Fweight);
+								(wsum_model.BPref[exp_iclass]).set2DFourierTransform(Fimg, A, IS_NOT_INV, &Fweight,my_ori_particle);
+
 							pthread_mutex_unlock(&global_mutex2[my_mutex]);
 #ifdef TIMING
 							// Only time one thread, as I also only time one MPI process

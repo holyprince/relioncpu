@@ -104,7 +104,7 @@ void BackProjector::initZeros(int current_size)
 void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
 		                        const Matrix2D<RFLOAT> &A, bool inv,
 		                        const MultidimArray<RFLOAT> *Mweight,
-								RFLOAT r_ewald_sphere, bool is_positive_curvature)
+								RFLOAT r_ewald_sphere, bool is_positive_curvature,int myoriparticle)
 {
 	RFLOAT fx, fy, fz, mfx, mfy, mfz, xp, yp, zp;
 	int first_x, x0, x1, y0, y1, z0, z1, y, y2, r2;
@@ -145,7 +145,16 @@ void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
     RFLOAT inv_diam_ewald = (r_ewald_sphere > 0.) ? 1./(2. * r_ewald_sphere) : 0.;
 	if (!is_positive_curvature)
 		inv_diam_ewald *= -1.;
+	//printf("inv_diam_ewald: %f %d\n",inv_diam_ewald,r_min_nn);
 
+	int x0min,x0max,y0min,y0max,z0min,z0max;
+	x0min=y0min=z0min=1000;
+	x0max=y0max=z0max=-1000;
+	FILE *fp;
+	if(myoriparticle ==1)
+	{
+		fp =fopen("res.txt","a");
+	}
     for (int i=0; i < YSIZE(f2d); i++)
 	{
 		// Dont search beyond square with side max_r
@@ -179,8 +188,11 @@ void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
 				my_weight = DIRECT_A2D_ELEM(*Mweight, i, x);
 			// else: my_weight was already initialised to 1.
 
+
 			if (my_weight > 0.)
 			{
+
+
 				/*
 				In our implementation, (x, y) are not scaled because:
 
@@ -203,6 +215,9 @@ void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
 				xp = Ainv(0,0) * x + Ainv(0,1) * y + Ainv(0,2) * z_on_ewaldp;
 				yp = Ainv(1,0) * x + Ainv(1,1) * y + Ainv(1,2) * z_on_ewaldp;
 				zp = Ainv(2,0) * x + Ainv(2,1) * y + Ainv(2,2) * z_on_ewaldp;
+
+				//printf("x and y: %d %d \n",x,y);
+
 
 				if (interpolator == TRILINEAR || r2 < min_r2_nn)
 				{
@@ -237,6 +252,21 @@ void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
 					fz = zp - z0;
 					z0 -= STARTINGZ(data);
 					z1 = z0 + 1;
+					if(myoriparticle ==1)
+					{
+						fprintf(fp,"%d %d %d \n",x0,y0,z0);
+					}
+
+/*					if(x0<x0min)
+						x0min=x0;
+					if(y0<y0min)
+						y0min=y0;
+					if(z0<z0min)
+						z0min=z0;
+
+					if(x0>x0max)x0max=x0;
+					if(y0>y0max)y0max=y0;
+					if(z0>z0max)z0max=z0;*/
 
 					mfx = 1. - fx;
 					mfy = 1. - fy;
@@ -300,6 +330,13 @@ void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
 			} // endif weight>0.
 		} // endif x-loop
 	} // endif y-loop
+	if(myoriparticle ==1)
+	{
+		fclose(fp);
+		printf("FINISH\n");
+	}
+    //if(myoriparticle ==1)
+    //printf("xyz min max: %d %d %d %d %d %d\n",x0min,y0min,z0min,x0max,y0max,z0max);
 }
 
 void BackProjector::backproject1Dto2D(const MultidimArray<Complex > &f1d,
@@ -1269,7 +1306,8 @@ void BackProjector::reconstruct(MultidimArray<RFLOAT> &vol_out,
 			else
 				A3D_ELEM(weight, k, i, j) = 0.;
 		}
-
+		printf("weight 13091 :%d %d %d \n",weight.zinit,weight.yinit,weight.xinit);
+		printf("weight 13092 :%d %d %d \n",weight.xdim,weight.ydim,weight.zdim);
 		decenter(weight, Fnewweight, max_r2);
 		RCTOCREC(ReconTimer,ReconS_5);
 

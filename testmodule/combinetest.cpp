@@ -1,6 +1,6 @@
 
 #include "../ml_optimiser_mpi.h"
-
+#include "datalayout.h"
 
 
 void setvalue(MlWsumModel &summodel,int ori_size,int datavalue)
@@ -75,6 +75,7 @@ void initwsmmodel(MlWsumModel &summodel, int cur_size,int ori_size,int nr_groups
 	BackProjector BP(ori_size,ref_dim,"C1");
 	summodel.BPref.clear();
 	summodel.BPref.resize(summodel.nr_classes * summodel.nr_bodies, BP); // also set multiple bodies
+	BP.clear();
 	summodel.pdf_class.resize(summodel.nr_classes, 1./(RFLOAT)summodel.nr_classes);
 	summodel.sumw_group.resize(nr_groups);
 	summodel.wsum_signal_product_spectra.resize(nr_groups, aux);
@@ -83,11 +84,11 @@ void initwsmmodel(MlWsumModel &summodel, int cur_size,int ori_size,int nr_groups
 	summodel.initZeros();
 	//printf("after : %f \n",summodel.LL);
 	//printf("BPrefsize : %d \n",summodel.BPref[0].getSize());
+	aux.clear();
 
 }
 
-
-int main(int argc, char **argv)
+void testmpicombine(int argc, char **argv)
 {
 	MlOptimiserMpi optimiser;
 
@@ -99,11 +100,12 @@ int main(int argc, char **argv)
 	printMpiNodesMachineNames(*(optimiser.node), 1);
 	//optimiser.initialise();
 	int ori_size=360;
-	int cur_size=236;
+	int cur_size=34;
 
 	initwsmmodel(optimiser.wsum_model,cur_size,ori_size,1000);
 	setvalue(optimiser.wsum_model,ori_size,optimiser.node->rank);
-	//printf("before combine : %f rank is %d  \n",optimiser.wsum_model.BPref[0].data.data[0].real,optimiser.node->rank);
+
+		//printf("before combine : %f rank is %d  \n",optimiser.wsum_model.BPref[0].data.data[0].real,optimiser.node->rank);
 
 	struct timeval tv1,tv2;
 	struct timezone tz;
@@ -113,17 +115,31 @@ int main(int argc, char **argv)
 	optimiser.combineAllWeightedSumsallreduce();
 	gettimeofday (&tv2, &tz);
 	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
-	if(optimiser.node->rank ==0 || optimiser.node->rank==1)
+	if(optimiser.node->rank==1)
 	{
 		printf("combinedata : %f ms and process id is %d \n", time_use,optimiser.node->rank) ;
 		printf("after combine : %f rank is %d \n",optimiser.wsum_model.BPref[0].data.data[0].real,optimiser.node->rank);
 	}
 
+}
 
-/*	int numprocess=100;
-	optimiser.do_split_random_halves=1;
-	optimiser.combineAllWeightedSums();*/
+int main(int argc, char **argv)
+{
+	MlOptimiser optimiser;
+
+	int ori_size=360;
+	int cur_size=34;
+
+	initwsmmodel(optimiser.wsum_model,cur_size,ori_size,1000);
+	setvalue(optimiser.wsum_model,ori_size,100);
+
+	//maskdata(optimiser.wsum_model.BPref[0].weight);
+	targetdata(optimiser.wsum_model.BPref[0].weight);
+
 }
 
 //method1 : use origin read method
 //method2 : self input method
+
+
+
