@@ -2754,7 +2754,7 @@ void MlOptimiser::expectation()
 			catch (std::bad_alloc& ba)
 			{
 				CRITICAL(RAMERR);
-			}			
+			}
 
 			std::complex<XFLOAT> *pData = mdlClassComplex[iclass];
 
@@ -8239,7 +8239,7 @@ void MlOptimiser::calculateExpectedAngularErrors(long int my_first_ori_particle,
 								getline(split, fn_ctf);
 						}
 						Ictf.read(fn_ctf);
-						
+
 						// If there is a redundant half, get rid of it
 						if (XSIZE(Ictf()) == YSIZE(Ictf()))
 						{

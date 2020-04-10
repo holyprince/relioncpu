@@ -72,7 +72,30 @@ void Projector::initialiseData(int current_size)
 	// Set origin in the y.z-center, but on the left side for x.
 	data.setXmippOrigin();
 	data.xinit=0;
-
+    //init compress data:
+	int max_r2= ROUND(r_max * padding_factor) * ROUND(r_max * padding_factor);
+	//if(ydata!=NULL)
+	//	free(ydata);
+	//if(yoffsetdata!=NULL)
+	//	free(yoffsetdata);
+	ydata=(int *)malloc(sizeof(int)*pad_size*pad_size);
+	memset(ydata,0,sizeof(int)*pad_size*pad_size);
+	for(int iz=0;iz<pad_size;iz++)
+		for(int jy=0;jy<pad_size;jy++)
+		{
+			int xtemp=max_r2 - (iz+ data.zinit)*(iz+ data.zinit) - (jy+data.yinit)*(jy+data.yinit);
+			if(xtemp<=0)
+				ydata[iz*pad_size+jy]= 0;
+			else
+				ydata[iz*pad_size+jy]= (int) sqrt(xtemp-0.01)+1;
+		}
+	yoffsetdata=(int *)malloc(sizeof(int)*pad_size*pad_size);
+	yoffsetdata[0]=0;
+	for(int cur=1;cur<pad_size*pad_size;cur++)
+		yoffsetdata[cur]=yoffsetdata[cur-1]+ydata[cur-1];
+	sumalldata=yoffsetdata[pad_size*pad_size-1]+ydata[pad_size*pad_size-1];
+	compdatareal.resize(sumalldata);
+	compdataimag.resize(sumalldata);
 }
 void Projector::initZeros(int current_size)
 {

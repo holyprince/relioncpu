@@ -38,7 +38,7 @@ class BackProjector: public Projector
 public:
 	// For backward projection: sum of weights
 	MultidimArray<RFLOAT> weight;
-
+	MultidimArray<RFLOAT> compweight;
 	// Tabulated blob values
 	TabFtBlob tab_ftblob;
 

@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "multidim_array.h"
 #include "complex.h"
-
+#define COM
 #ifdef CUDA
 
 #include "cuda.h"

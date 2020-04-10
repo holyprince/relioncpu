@@ -83,6 +83,7 @@ void BackProjector::initialiseDataAndWeight(int current_size)
 
 	initialiseData(current_size);
 	weight.resize(data);
+	compweight.resize(compdatareal);
 
 }
 void BackProjector::initialiseOnlyData(int current_size)
@@ -99,6 +100,9 @@ void BackProjector::initZeros(int current_size)
 	initialiseDataAndWeight(current_size);
 	data.initZeros();
 	weight.initZeros();
+	compweight.initZeros();
+	compdatareal.initZeros();
+	compdataimag.initZeros();
 }
 
 void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
@@ -147,14 +151,7 @@ void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
 		inv_diam_ewald *= -1.;
 	//printf("inv_diam_ewald: %f %d\n",inv_diam_ewald,r_min_nn);
 
-	int x0min,x0max,y0min,y0max,z0min,z0max;
-	x0min=y0min=z0min=1000;
-	x0max=y0max=z0max=-1000;
-	FILE *fp;
-	if(myoriparticle ==1)
-	{
-		fp =fopen("res.txt","a");
-	}
+
     for (int i=0; i < YSIZE(f2d); i++)
 	{
 		// Dont search beyond square with side max_r
@@ -252,21 +249,7 @@ void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
 					fz = zp - z0;
 					z0 -= STARTINGZ(data);
 					z1 = z0 + 1;
-					if(myoriparticle ==1)
-					{
-						fprintf(fp,"%d %d %d \n",x0,y0,z0);
-					}
 
-/*					if(x0<x0min)
-						x0min=x0;
-					if(y0<y0min)
-						y0min=y0;
-					if(z0<z0min)
-						z0min=z0;
-
-					if(x0>x0max)x0max=x0;
-					if(y0>y0max)y0max=y0;
-					if(z0>z0max)z0max=z0;*/
 
 					mfx = 1. - fx;
 					mfy = 1. - fy;
@@ -283,8 +266,70 @@ void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
 
 					if (is_neg_x)
 						my_val = conj(my_val);
-
+#ifdef COM
+					int stz=STARTINGZ(data);
+					int sty=STARTINGY(data);
+					int datacur;
 					// Store slice in 3D weighted sum
+					if(x0 * x0 + (y0+sty) * (y0+sty) + (z0+stz) * (z0+stz) < max_r2*4)
+					{
+						datacur=yoffsetdata[(z0)*pad_size+(y0)]+(x0);
+						compdatareal.data[datacur] +=dd000 * my_val.real;
+						compdataimag.data[datacur] +=dd000 * my_val.imag;
+						compweight.data[datacur]+=dd000 * my_weight;
+					}
+					if(x1 * x1 + (y0+sty) * (y0+sty) + (z0+stz) * (z0+stz) < max_r2*4)
+					{
+						datacur=yoffsetdata[(z0)*pad_size+(y0)]+(x1);
+						compdatareal.data[datacur] +=dd001 * my_val.real;
+						compdataimag.data[datacur] +=dd001 * my_val.imag;
+						compweight.data[datacur]+=dd001 * my_weight;
+					}
+					if(x0 * x0  + (y1+sty) * (y1+sty) + (z0+stz) * (z0+stz) < max_r2*4)
+					{
+						datacur=yoffsetdata[(z0)*pad_size+(y1)]+(x0);
+						compdatareal.data[datacur] +=dd010 * my_val.real;
+						compdataimag.data[datacur] +=dd010 * my_val.imag;
+						compweight.data[datacur]+=dd010 * my_weight;
+					}
+					if(x1 * x1 + (y1+sty) * (y1+sty) + (z0+stz) * (z0+stz) < max_r2*4)
+					{
+						datacur=yoffsetdata[(z0)*pad_size+(y1)]+(x1);
+						compdatareal.data[datacur] +=dd011 * my_val.real;
+						compdataimag.data[datacur] +=dd011 * my_val.imag;
+						compweight.data[datacur]+=dd011 * my_weight;
+					}
+					if(x0 * x0 + (y0+sty) * (y0+sty) + (z1+stz) * (z1+stz) < max_r2*4)
+					{
+						datacur=yoffsetdata[(z1)*pad_size+(y0)]+(x0);
+						compdatareal.data[datacur] +=dd100 * my_val.real;
+						compdataimag.data[datacur] +=dd100 * my_val.imag;
+						compweight.data[datacur]+=dd100 * my_weight;
+					}
+					if(x1 * x1 + (y0+sty) * (y0+sty) + (z1+stz) * (z1+stz) < max_r2*4)
+					{
+						datacur=yoffsetdata[(z1)*pad_size+(y0)]+(x1);
+						compdatareal.data[datacur] +=dd101 * my_val.real;
+						compdataimag.data[datacur] +=dd101 * my_val.imag;
+						compweight.data[datacur]+=dd101 * my_weight;
+					}
+					if(x0 * x0 + (y1+sty) * (y1+sty) + (z1+stz) * (z1+stz) < max_r2*4)
+					{
+						datacur=yoffsetdata[(z1)*pad_size+(y1)]+(x0);
+						compdatareal.data[datacur] +=dd110 * my_val.real;
+						compdataimag.data[datacur] +=dd110 * my_val.imag;
+						compweight.data[datacur]+=dd110 * my_weight;
+					}
+					if(x1 * x1 + (y1+sty) * (y1+sty) + (z1+stz) * (z1+stz) < max_r2*4)
+					{
+						datacur=yoffsetdata[(z1)*pad_size+(y1)]+(x1);
+						compdatareal.data[datacur] +=dd111 * my_val.real;
+						compdataimag.data[datacur] +=dd111 * my_val.imag;
+						compweight.data[datacur]+=dd111 * my_weight;
+					}
+#else
+
+
 					DIRECT_A3D_ELEM(data, z0, y0, x0) += dd000 * my_val;
 					DIRECT_A3D_ELEM(data, z0, y0, x1) += dd001 * my_val;
 					DIRECT_A3D_ELEM(data, z0, y1, x0) += dd010 * my_val;
@@ -302,7 +347,7 @@ void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
 					DIRECT_A3D_ELEM(weight, z1, y0, x1) += dd101 * my_weight;
 					DIRECT_A3D_ELEM(weight, z1, y1, x0) += dd110 * my_weight;
 					DIRECT_A3D_ELEM(weight, z1, y1, x1) += dd111 * my_weight;
-
+#endif
 				} // endif TRILINEAR
 				else if (interpolator == NEAREST_NEIGHBOUR )
 				{
@@ -330,11 +375,6 @@ void BackProjector::backproject2Dto3D(const MultidimArray<Complex > &f2d,
 			} // endif weight>0.
 		} // endif x-loop
 	} // endif y-loop
-	if(myoriparticle ==1)
-	{
-		fclose(fp);
-		printf("FINISH\n");
-	}
     //if(myoriparticle ==1)
     //printf("xyz min max: %d %d %d %d %d %d\n",x0min,y0min,z0min,x0max,y0max,z0max);
 }
@@ -1306,8 +1346,7 @@ void BackProjector::reconstruct(MultidimArray<RFLOAT> &vol_out,
 			else
 				A3D_ELEM(weight, k, i, j) = 0.;
 		}
-		printf("weight 13091 :%d %d %d \n",weight.zinit,weight.yinit,weight.xinit);
-		printf("weight 13092 :%d %d %d \n",weight.xdim,weight.ydim,weight.zdim);
+
 		decenter(weight, Fnewweight, max_r2);
 		RCTOCREC(ReconTimer,ReconS_5);
 

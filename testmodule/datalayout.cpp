@@ -5,7 +5,7 @@ void printdata(MultidimArray<RFLOAT> V)
 	for(int i=0;i<V.zdim;i++)
 	{
 
-		if(i==2)
+		if(i==0)
 		{
 		for(int j=0;j<V.ydim;j++)
 		{
@@ -23,22 +23,20 @@ void printdata(MultidimArray<RFLOAT> V)
 	}
 }
 
-void maskdata(MultidimArray<RFLOAT> V)
+void maskdata(MultidimArray<RFLOAT> &V)
 {
 
 
 	int r_max=17;
 	int padding_factor=2;
 	int max_r2= ROUND(r_max * padding_factor) * ROUND(r_max * padding_factor);
-/*    for (long int k=STARTINGZ(V); k<=FINISHINGZ(V); k++) \
-        for (long int i=STARTINGY(V); i<=FINISHINGY(V); i++) \
-            for (long int j=STARTINGX(V); j<=FINISHINGX(V); j++)*/
+
 	int sumres=0;
     FOR_ALL_ELEMENTS_IN_ARRAY3D(V)
 	{
 		if (k * k + i * i + j * j < max_r2)
 		{
-			A3D_ELEM(V, k, i, j) = 1.;
+			A3D_ELEM(V, k, i, j) = 1;
 			sumres++;
 		}
 		else
@@ -46,7 +44,7 @@ void maskdata(MultidimArray<RFLOAT> V)
 	}
 	printf("%d ",sumres);
     printf("\n");
-
+    //printdata(V);
 
 
 }
@@ -139,14 +137,16 @@ void targetdata(MultidimArray<RFLOAT> V)
 			datacur=yoffsetdata[(k-STARTINGZ(V))*ydim+(i-STARTINGY(V))]+(j-STARTINGX(V));
 			compressdata[datacur]=1;
 		}
-		//else
-			//A3D_ELEM(V, k, i, j) = 0.;
 	}
 	int compressdatasum=0;
 	for(int i=0;i<sumall;i++)
 		if(compressdata[i]==1)
 			compressdatasum++;
 	printf("compressdata value : %d\n",compressdatasum);
+
+	int indexy=(V.zdim/2*V.ydim)+V.ydim/2;
+	printf("indexy: %d \n",indexy);
+	printf("datay %d \n",ydata[indexy]);
 
 	V.initZeros(zdim,ydim,xdim);
 
@@ -170,7 +170,7 @@ void targetdata(MultidimArray<RFLOAT> V)
 		if(V.data[i]==1)
 			vailres++;
 	printf("vailres : %d \n",vailres);
-	printdata(V);
+	//printdata(V);
 	//method2: point-wise copy
 
 	//real apply
@@ -179,3 +179,72 @@ void targetdata(MultidimArray<RFLOAT> V)
 
 }
 //y=35,z=5,x=16
+
+void decenter(MultidimArray<float> &Min, MultidimArray<float> &Mout, int my_rmax2)
+{
+
+	   // Mout should already have the right size
+	   // Initialize to zero
+	   Mout.initZeros();
+	   FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM(Mout)
+	   {
+		   if (kp*kp + ip*ip + jp*jp <= my_rmax2)
+			   DIRECT_A3D_ELEM(Mout, k, i, j) = A3D_ELEM(Min, kp, ip, jp);
+	   }
+	   /*
+	   jp = 0-XSIZE
+	   ip = (i < XSIZE(V)) ? i : i - YSIZE(V))
+	   kp = (k < XSIZE(V)) ? k : k - ZSIZE(V))
+	   kp,jp,ip is distance and value in k i j
+	    */
+}
+void decenter2d(MultidimArray<float> &Min, MultidimArray<float> &Mout, int my_rmax2)
+{
+	FOR_ALL_ELEMENTS_IN_FFTW_TRANSFORM2D(Min)
+	{
+		//if (ip*ip + jp*jp <= my_rmax2)
+		DIRECT_A2D_ELEM(Mout, i, j) = A2D_ELEM(Min, ip, jp);
+		if(i==0 && j==0)
+			printf("%d %d \n",ip,jp);
+	}
+}
+
+void testdecenter(MultidimArray<RFLOAT> V)
+{
+	MultidimArray<float> Fnewweight;
+	Fnewweight.resize(V);
+	int r_max=17;
+	int padding_factor=2;
+	int max_r2= ROUND(r_max * padding_factor) * ROUND(r_max * padding_factor);
+	printdata(V);
+	printf("\n");
+	decenter(V, Fnewweight, max_r2);
+
+	printdata(Fnewweight);
+}
+void test2dcenter(MultidimArray<RFLOAT> V)
+{
+	MultidimArray<float> indata;
+	indata.resize(V.ydim,V.xdim);
+	indata.setXmippOrigin();
+	indata.xinit=0;
+	MultidimArray<float> outdata;
+	outdata.resize(indata);
+	for(int i=0;i<indata.nzyxdim;i++)
+		indata.data[i]=i;
+	for(int i=0;i<indata.nzyxdim;i++)
+	{
+		printf("%f ",indata.data[i]);
+		if((i+1)%outdata.xdim==0)
+			printf("\n");
+	}
+
+	printf("\n");
+	decenter2d(indata,outdata,34);
+	for(int i=0;i<indata.nzyxdim;i++)
+	{
+		printf("%f ",outdata.data[i]);
+		if((i+1)%outdata.xdim==0)
+			printf("\n");
+	}
+}

@@ -106,7 +106,6 @@ void testmpicombine(int argc, char **argv)
 	setvalue(optimiser.wsum_model,ori_size,optimiser.node->rank);
 
 		//printf("before combine : %f rank is %d  \n",optimiser.wsum_model.BPref[0].data.data[0].real,optimiser.node->rank);
-
 	struct timeval tv1,tv2;
 	struct timezone tz;
 	float time_use;
@@ -122,10 +121,60 @@ void testmpicombine(int argc, char **argv)
 	}
 
 }
-
-int main(int argc, char **argv)
+void compressmodle(MlWsumModel &model,int cur_size)
 {
-	MlOptimiser optimiser;
+	int r_max=cur_size/2;
+	int padding_factor=2;
+	int max_r2= ROUND(r_max * padding_factor) * ROUND(r_max * padding_factor);
+	int ydim=model.BPref[0].data.ydim;
+	FOR_ALL_ELEMENTS_IN_ARRAY3D(model.BPref[0].data)
+	{
+		if (k * k + i * i + j * j < max_r2)
+		{
+			int datacur;
+			datacur=model.BPref[0].yoffsetdata[(k-STARTINGZ(model.BPref[0].data))*ydim+(i-STARTINGY(model.BPref[0].data))]+(j-STARTINGX(model.BPref[0].data));
+			model.BPref[0].compweight.data[datacur]=1;
+		}
+	}
+}
+void testcompresscombine(int argc, char **argv)
+{
+	MlOptimiserMpi optimiser;
+
+	optimiser.node = new MpiNode(argc, argv);
+
+	//printf("MPI %d and %d ",optimiser.node->rank,optimiser.node->size);
+
+	optimiser.do_split_random_halves=1;
+	printMpiNodesMachineNames(*(optimiser.node), 1);
+	//optimiser.initialise();
+	int ori_size=500;
+	int cur_size=488;
+
+	initwsmmodel(optimiser.wsum_model,cur_size,ori_size,1000);
+	setvalue(optimiser.wsum_model,ori_size,optimiser.node->rank);
+	compressmodle(optimiser.wsum_model,cur_size);
+
+	struct timeval tv1,tv2;
+	struct timezone tz;
+	float time_use;
+	gettimeofday (&tv1, &tz);
+	//optimiser.combineAllWeightedSums();
+	//optimiser.combineAllWeightedSumscompressdata();
+	optimiser.combineAllWeightedSumsallreducewithcompress();
+	gettimeofday (&tv2, &tz);
+	time_use=1000 * (tv2.tv_sec-tv1.tv_sec)+ (tv2.tv_usec-tv1.tv_usec)/1000;
+	if(optimiser.node->rank==1)
+	{
+		printf("combinedata : %f ms and process id is %d \n", time_use,optimiser.node->rank) ;
+		printf("after combine : %f rank is %d \n",optimiser.wsum_model.BPref[0].data.data[0].real,optimiser.node->rank);
+	}
+
+}
+int main(int argc, char **argv)
+//int testmain(int argc, char **argv)
+{
+/*	MlOptimiser optimiser;
 
 	int ori_size=360;
 	int cur_size=34;
@@ -133,8 +182,13 @@ int main(int argc, char **argv)
 	initwsmmodel(optimiser.wsum_model,cur_size,ori_size,1000);
 	setvalue(optimiser.wsum_model,ori_size,100);
 
-	//maskdata(optimiser.wsum_model.BPref[0].weight);
+	maskdata(optimiser.wsum_model.BPref[0].weight);
+
 	targetdata(optimiser.wsum_model.BPref[0].weight);
+	//testdecenter(optimiser.wsum_model.BPref[0].weight);
+*/
+	testcompresscombine(argc,argv);
+
 
 }
 
