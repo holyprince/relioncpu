@@ -187,7 +187,8 @@ int main(int argc, char **argv)
 	targetdata(optimiser.wsum_model.BPref[0].weight);
 	//testdecenter(optimiser.wsum_model.BPref[0].weight);
 */
-	testcompresscombine(argc,argv);
+	testmpicombine(argc,argv);
+//	testcompresscombine(argc,argv);
 
 
 }

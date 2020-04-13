@@ -96,7 +96,7 @@ public:
     /** Build in some better error handling and (hopefully better) robustness to communication failures in the MPI_Send/MPI_Recv pairs....
      */
     int relion_MPI_Send(void *buf, std::ptrdiff_t count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm);
-
+    int relion_MPI_Allreduce(void* send_data,void* recv_data,std::ptrdiff_t count,MPI_Datatype datatype,MPI_Op op,MPI_Comm communicator);
     int relion_MPI_Recv(void *buf, std::ptrdiff_t count, MPI_Datatype datatype, int source, int tag, MPI_Comm comm, MPI_Status &status);
 
     int relion_MPI_Bcast(void *buffer, long int count, MPI_Datatype datatype, int root, MPI_Comm comm);

@@ -2105,7 +2105,8 @@ void MlOptimiserMpi::combineAllWeightedSumsallreduce()
 					Msum.initZeros(Mpack);
 			}
 			printf("pack finished %d \n",node->rank);
-			MPI_Allreduce(MULTIDIM_ARRAY(Mpack), MULTIDIM_ARRAY(Msum),MULTIDIM_SIZE(Msum), MY_MPI_DOUBLE, MPI_SUM, node->group_comm);
+			node->relion_MPI_Allreduce(MULTIDIM_ARRAY(Mpack),MULTIDIM_ARRAY(Msum),MULTIDIM_SIZE(Msum), MY_MPI_DOUBLE, MPI_SUM, node->group_comm);
+			//MPI_Allreduce(MULTIDIM_ARRAY(Mpack), MULTIDIM_ARRAY(Msum),MULTIDIM_SIZE(Msum), MY_MPI_DOUBLE, MPI_SUM, node->group_comm);
 /*
 			// Loop through all slaves: each slave sends its Msum to the next slave for its subset.
 			// Each next slave sums its own Mpack to the received Msum and sends it on to the next slave
